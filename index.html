@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PollyGlot Translator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 PollyGlot Translator</h1>
+            <p>Translate text to multiple languages using AI</p>
+        </header>
+        
+        <main class="translator">
+            <div class="input-section">
+                <label for="input-text">Enter text to translate:</label>
+                <textarea 
+                    id="input-text" 
+                    placeholder="Type or paste your text here..."
+                    rows="4"
+                ></textarea>
+            </div>
+            
+            <div class="language-selection">
+                <label>Select target language:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="Spanish" checked>
+                        Spanish
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="French">
+                        French
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="German">
+                        German
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="Italian">
+                        Italian
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="Portuguese">
+                        Portuguese
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="target-language" value="Japanese">
+                        Japanese
+                    </label>
+                </div>
+            </div>
+            
+            <button id="translate-btn" class="translate-button">
+                <span class="btn-text">Translate</span>
+                <span class="btn-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    Translating...
+                </span>
+            </button>
+            
+            <div class="output-section" id="output-section" style="display: none;">
+                <label>Translation:</label>
+                <div class="translation-result" id="translation-result"></div>
+                <div class="translation-meta">
+                    <span class="source-language">Source: <span id="source-lang">Auto-detected</span></span>
+                    <span class="target-language">Target: <span id="target-lang">Spanish</span></span>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by OpenAI GPT-4</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
