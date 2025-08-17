@@ -10,11 +10,27 @@
     <div class="container">
         <header>
             <h1>🌍 WorldLingo Translator</h1>
-            <p>Translate text to multiple languages using AI</p>
+            <p>Learn any language by chatting with an AI</p>
         </header>
         
-        <!-- Setup Screen -->
-        <main class="setup-screen" id="setup-screen">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <!-- <button class="nav-btn active" data-section="setup">⚙️ Setup</button> -->
+                <button class="nav-btn" data-section="translate">📝 Translate</button>
+                <button class="nav-btn" data-section="chat">💬 Chat</button>
+                
+                <div class="language-selector">
+                    <label for="navbar-language">🌍 Language:</label>
+                    <select id="navbar-language" class="language-dropdown">
+                        <!-- Languages will be populated dynamically -->
+                    </select>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Setup Section -->
+        <main class="section-content" id="setup-section">
             <div class="setup-content">
                 <h2>🔧 Developer Setup</h2>
                 <p>Configure your OpenAI API parameters to get started</p>
@@ -60,11 +76,11 @@
                             min="0" 
                             max="2" 
                             step="0.1" 
-                            value="0.3"
+                            value="1.2"
                         >
                         <div class="range-labels">
                             <span>Focused (0)</span>
-                            <span id="temp-value">0.3</span>
+                            <span id="temp-value">1.2</span>
                             <span>Creative (2)</span>
                         </div>
                         <br>
@@ -73,14 +89,19 @@
                     </div>
                     
                     <button id="setup-complete-btn" class="setup-button">
-                        🚀 Start Translating
+                        🚀 Get Started
                     </button>
                 </div>
             </div>
         </main>
         
-        <!-- Translator Interface (Hidden initially) -->
-        <main class="translator" id="translator" style="display: none;">
+        <!-- Translate Section -->
+        <main class="section-content" id="translate-section" style="display: none;">
+            <div class="section-header">
+                <h2>📝 Translation Tool</h2>
+                <p>Translate text between languages with AI-powered accuracy</p>
+            </div>
+            
             <div class="input-section">
                 <label for="input-text">Enter text to translate:</label>
                 <textarea 
@@ -90,12 +111,7 @@
                 ></textarea>
             </div>
             
-            <div class="language-selection">
-                <label>Select target language:</label>
-                <div class="radio-group" id="language-options">
-                    <!-- Languages will be populated dynamically from config.js -->
-                </div>
-            </div>
+
             
             <button id="translate-btn" class="translate-button">
                 <span class="btn-text">Translate</span>
@@ -110,7 +126,39 @@
                 <div class="translation-result" id="translation-result"></div>
                 <div class="translation-meta">
                     <span class="source-language">Source: <span id="source-lang">Auto-detected</span></span>
-                    <span class="target-language">Target: <span id="target-lang">Spanish</span></span>
+                    <span class="target-language">Target: <span id="target-lang">Auto-detected</span></span>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Chat Section -->
+        <main class="section-content" id="chat-section" style="display: none;">
+            <div class="section-header">
+                <h2>💬 Language Chat</h2>
+                <p>Practice conversations in your target language with AI assistance</p>
+            </div>
+            
+
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-welcome">
+                        <p>💬 Start a conversation! Type your message below and I'll respond in the selected language.</p>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        placeholder="Type your message here..."
+                        rows="2"
+                    ></textarea>
+                    <button id="chat-send-btn" class="chat-send-button">
+                        <span>Send</span>
+                        <span class="btn-loading" style="display: none;">
+                            <div class="spinner"></div>
+                        </span>
+                    </button>
                 </div>
             </div>
         </main>

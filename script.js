@@ -9,7 +9,7 @@ class Translator {
 
     init() {
         this.checkSetupStatus();
-        this.populateLanguages();
+        this.populateNavbarLanguage();
         this.bindEvents();
     }
 
@@ -23,28 +23,43 @@ class Translator {
                 this.model = config.model;
                 this.maxTokens = config.maxTokens;
                 this.temperature = config.temperature;
-                this.showTranslator();
+                this.navigateToSection('translate');
             } catch (e) {
                 localStorage.removeItem('pollyglot_config');
-                this.showSetup();
+                this.navigateToSection('setup');
             }
         } else {
-            this.showSetup();
+            this.navigateToSection('setup');
         }
     }
 
-    showSetup() {
-        document.getElementById('setup-screen').style.display = 'block';
-        document.getElementById('translator').style.display = 'none';
+    navigateToSection(sectionName) {
+        // Hide all sections
+        const sections = ['setup-section', 'translate-section', 'chat-section'];
+        sections.forEach(section => {
+            document.getElementById(section).style.display = 'none';
+        });
+
+        // Show selected section
+        document.getElementById(`${sectionName}-section`).style.display = 'block';
+
+        // Update navigation buttons
+        const navBtns = document.querySelectorAll('.nav-btn');
+        navBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-section') === sectionName) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Language selection is now handled globally in the navbar
     }
 
-    showTranslator() {
-        document.getElementById('setup-screen').style.display = 'none';
-        document.getElementById('translator').style.display = 'block';
-    }
-
-    populateLanguages() {
-        const languageContainer = document.getElementById('language-options');
+    populateLanguages(sectionName = 'translate') {
+        const containerId = sectionName === 'chat' ? 'chat-language-options' : 'language-options';
+        const languageContainer = document.getElementById(containerId);
+        if (!languageContainer) return;
+        
         languageContainer.innerHTML = '';
         
         CONFIG.LANGUAGES.forEach((lang, index) => {
@@ -53,7 +68,7 @@ class Translator {
             
             const radio = document.createElement('input');
             radio.type = 'radio';
-            radio.name = 'target-language';
+            radio.name = sectionName === 'chat' ? 'chat-target-language' : 'target-language';
             radio.value = lang.value;
             if (index === 0) radio.checked = true;
             
@@ -62,6 +77,21 @@ class Translator {
             label.appendChild(radio);
             label.appendChild(text);
             languageContainer.appendChild(label);
+        });
+    }
+
+    populateNavbarLanguage() {
+        const languageDropdown = document.getElementById('navbar-language');
+        if (!languageDropdown) return;
+        
+        languageDropdown.innerHTML = '';
+        
+        CONFIG.LANGUAGES.forEach((lang, index) => {
+            const option = document.createElement('option');
+            option.value = lang.value;
+            option.textContent = `${lang.flag} ${lang.label}`;
+            if (index === 0) option.selected = true;
+            languageDropdown.appendChild(option);
         });
     }
 
@@ -76,19 +106,43 @@ class Translator {
             tempValue.textContent = e.target.value;
         });
 
+        // Navigation events
+        const navBtns = document.querySelectorAll('.nav-btn');
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const section = btn.getAttribute('data-section');
+                this.navigateToSection(section);
+            });
+        });
+
+        // Language selection event
+        const languageDropdown = document.getElementById('navbar-language');
+        if (languageDropdown) {
+            languageDropdown.addEventListener('change', () => {
+                this.updateTargetLanguage();
+            });
+        }
+
         // Translator events
         const translateBtn = document.getElementById('translate-btn');
         const inputText = document.getElementById('input-text');
-        const languageRadios = document.querySelectorAll('input[name="target-language"]');
 
         translateBtn.addEventListener('click', () => this.handleTranslate());
         inputText.addEventListener('input', () => this.handleInputChange());
-        
-        languageRadios.forEach(radio => {
-            radio.addEventListener('change', () => this.updateTargetLanguage());
+
+        // Chat events
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatInput = document.getElementById('chat-input');
+
+        chatSendBtn.addEventListener('click', () => this.handleChatSend());
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleChatSend();
+            }
         });
 
-        // Enter key support
+        // Enter key support for translate
         inputText.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.ctrlKey) {
                 this.handleTranslate();
@@ -97,6 +151,103 @@ class Translator {
     }
 
     // Configuration is now handled in the setup screen
+
+    // Mode switching is now handled by the navbar navigation
+
+    async handleChatSend() {
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const message = chatInput.value.trim();
+
+        if (!message) return;
+
+        const targetLanguage = document.getElementById('navbar-language').value;
+        
+        // Add user message to chat
+        this.addChatMessage('user', message);
+        
+        // Clear input and disable send button
+        chatInput.value = '';
+        this.setChatLoading(true);
+
+        try {
+            // Get AI response
+            const response = await this.getChatResponse(message, targetLanguage);
+            this.addChatMessage('assistant', response);
+        } catch (error) {
+            this.addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+        } finally {
+            this.setChatLoading(false);
+        }
+    }
+
+    async getChatResponse(message, targetLanguage) {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            },
+            body: JSON.stringify({
+                model: this.model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are a helpful AI assistant. Respond to the user's message in ${targetLanguage}. 
+                        Keep your responses conversational and natural. If the user asks a question, answer it helpfully.
+                        If they just want to chat, engage with them naturally. Always respond in ${targetLanguage}.`
+                    },
+                    {
+                        role: 'user',
+                        content: message
+                    }
+                ],
+                max_tokens: this.maxTokens,
+                temperature: this.temperature
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+    }
+
+    addChatMessage(role, content) {
+        const chatMessages = document.getElementById('chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${role}`;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        
+        messageDiv.innerHTML = `
+            <div class="chat-bubble ${role}">${content}</div>
+            <div class="chat-timestamp">${timestamp}</div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    setChatLoading(isLoading) {
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatInput = document.getElementById('chat-input');
+        
+        if (isLoading) {
+            chatSendBtn.disabled = true;
+            chatInput.disabled = true;
+            chatSendBtn.querySelector('.btn-loading').style.display = 'inline-flex';
+            chatSendBtn.querySelector('span:first-child').style.display = 'none';
+        } else {
+            chatSendBtn.disabled = false;
+            chatInput.disabled = false;
+            chatSendBtn.querySelector('.btn-loading').style.display = 'none';
+            chatSendBtn.querySelector('span:first-child').style.display = 'inline';
+        }
+    }
 
     completeSetup() {
         const apiKey = document.getElementById('api-key').value.trim();
@@ -124,8 +275,8 @@ class Translator {
 
         localStorage.setItem('pollyglot_config', JSON.stringify(config));
         
-        // Transition to translator
-        this.showTranslator();
+        // Transition to translate section
+        this.navigateToSection('translate');
         this.showSuccess('✅ Configuration saved! You can now start translating.');
     }
 
@@ -143,7 +294,7 @@ class Translator {
 
     async handleTranslate() {
         const inputText = document.getElementById('input-text').value.trim();
-        const targetLanguage = document.querySelector('input[name="target-language"]:checked').value;
+        const targetLanguage = document.getElementById('navbar-language').value;
 
         if (!inputText) {
             this.showError('Please enter some text to translate.');
@@ -293,8 +444,10 @@ class Translator {
 
     updateTargetLanguage() {
         const targetLangSpan = document.getElementById('target-lang');
-        const selectedLanguage = document.querySelector('input[name="target-language"]:checked').value;
-        targetLangSpan.textContent = selectedLanguage;
+        const selectedLanguage = document.getElementById('navbar-language').value;
+        if (targetLangSpan) {
+            targetLangSpan.textContent = selectedLanguage;
+        }
     }
 }
 
