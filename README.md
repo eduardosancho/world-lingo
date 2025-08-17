@@ -1,4 +1,4 @@
-# 🌍 PollyGlot Translator
+# 🌍 World Lingo Translator
 
 A beautiful, modern web application that translates text to multiple languages using OpenAI's GPT-4 API.
 

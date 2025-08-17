@@ -34,7 +34,7 @@ const CONFIG = {
     TEMPERATURE: 0.3,
     
     // 🎨 UI settings
-    APP_NAME: 'PollyGlot Translator',
+    APP_NAME: 'WorldLingo Translator',
     APP_VERSION: '1.0.0'
 };
 
