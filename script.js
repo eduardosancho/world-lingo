@@ -1,9 +1,12 @@
 class Translator {
     constructor() {
         this.apiKey = '';
-        this.model = 'gpt-4';
-        this.maxTokens = 1000;
-        this.temperature = 1.2;
+        this.model = CONFIG.MODEL || 'gpt-4';
+        this.maxTokens = CONFIG.MAX_TOKENS || 1000;
+        this.temperature = CONFIG.TEMPERATURE || 0.9;
+        this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
+        this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
+        this.chatHistory = [];
         this.init();
     }
 
@@ -23,13 +26,172 @@ class Translator {
                 this.model = config.model;
                 this.maxTokens = config.maxTokens;
                 this.temperature = config.temperature;
-                this.navigateToSection('translate');
+                this.frequencyPenalty = config.frequencyPenalty || 0;
+                this.presencePenalty = config.presencePenalty || 0;
+                
+                // Show settings page with current values
+                this.showSettingsPage();
             } catch (e) {
                 localStorage.removeItem('pollyglot_config');
-                this.navigateToSection('setup');
+                this.showSettingsPage();
             }
         } else {
-            this.navigateToSection('setup');
+            // Use CONFIG defaults for settings
+            this.model = CONFIG.MODEL;
+            this.maxTokens = CONFIG.MAX_TOKENS;
+            this.temperature = CONFIG.TEMPERATURE;
+            this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
+            this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
+            this.showSettingsPage();
+        }
+    }
+
+    showSettingsPage() {
+        // Populate settings form with current values
+        this.populateSettingsForm();
+        
+        // Bind slider and number input synchronization
+        this.bindSettingsSync();
+    }
+
+    populateSettingsForm() {
+        // Set model selection
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect) {
+            modelSelect.value = this.model;
+        }
+        
+        // Set temperature values
+        const tempSlider = document.getElementById('temperature-slider');
+        const tempInput = document.getElementById('temperature');
+        if (tempSlider && tempInput) {
+            tempSlider.value = this.temperature;
+            tempInput.value = this.temperature;
+        }
+        
+        // Set frequency penalty values
+        const freqSlider = document.getElementById('frequency-penalty-slider');
+        const freqInput = document.getElementById('frequency-penalty');
+        if (freqSlider && freqInput) {
+            freqSlider.value = this.frequencyPenalty;
+            freqInput.value = this.frequencyPenalty;
+        }
+        
+        // Set presence penalty values
+        const presenceSlider = document.getElementById('presence-penalty-slider');
+        const presenceInput = document.getElementById('presence-penalty');
+        if (presenceSlider && presenceInput) {
+            presenceSlider.value = this.presencePenalty;
+            presenceInput.value = this.presencePenalty;
+        }
+    }
+
+    bindSettingsSync() {
+        // Temperature synchronization
+        const tempSlider = document.getElementById('temperature-slider');
+        const tempInput = document.getElementById('temperature');
+        if (tempSlider && tempInput) {
+            tempSlider.addEventListener('input', (e) => {
+                tempInput.value = e.target.value;
+            });
+            tempInput.addEventListener('input', (e) => {
+                let value = parseFloat(e.target.value);
+                if (isNaN(value)) value = 0;
+                value = Math.max(0, Math.min(2, value));
+                e.target.value = value;
+                tempSlider.value = value;
+            });
+        }
+        
+        // Frequency penalty synchronization
+        const freqSlider = document.getElementById('frequency-penalty-slider');
+        const freqInput = document.getElementById('frequency-penalty');
+        if (freqSlider && freqInput) {
+            freqSlider.addEventListener('input', (e) => {
+                freqInput.value = e.target.value;
+            });
+            freqInput.addEventListener('input', (e) => {
+                let value = parseFloat(e.target.value);
+                if (isNaN(value)) value = 0;
+                value = Math.max(-2, Math.min(2, value));
+                e.target.value = value;
+                freqSlider.value = value;
+            });
+        }
+        
+        // Presence penalty synchronization
+        const presenceSlider = document.getElementById('presence-penalty-slider');
+        const presenceInput = document.getElementById('presence-penalty');
+        if (presenceSlider && presenceInput) {
+            presenceSlider.addEventListener('input', (e) => {
+                presenceInput.value = e.target.value;
+            });
+            presenceInput.addEventListener('input', (e) => {
+                let value = parseFloat(e.target.value);
+                if (isNaN(value)) value = 0;
+                value = Math.max(-2, Math.min(2, value));
+                e.target.value = value;
+                presenceSlider.value = value;
+            });
+        }
+    }
+
+    saveSettings() {
+        // Get current values from form
+        const model = document.getElementById('model-select').value;
+        const temperature = parseFloat(document.getElementById('temperature').value);
+        const frequencyPenalty = parseFloat(document.getElementById('frequency-penalty').value);
+        const presencePenalty = parseFloat(document.getElementById('presence-penalty').value);
+
+        // Update instance variables
+        this.model = model;
+        this.temperature = temperature;
+        this.frequencyPenalty = frequencyPenalty;
+        this.presencePenalty = presencePenalty;
+
+        // Update stored configuration (keep existing API key and max tokens)
+        const storedConfig = localStorage.getItem('pollyglot_config');
+        if (storedConfig) {
+            try {
+                const config = JSON.parse(storedConfig);
+                config.model = model;
+                config.temperature = temperature;
+                config.frequencyPenalty = frequencyPenalty;
+                config.presencePenalty = presencePenalty;
+                
+                localStorage.setItem('pollyglot_config', JSON.stringify(config));
+                
+                // Show success indicator
+                this.showSaveIndicator();
+            } catch (e) {
+                console.error('Error saving settings:', e);
+                this.showError('Failed to save settings. Please try again.');
+            }
+        } else {
+            // Create new config if none exists
+            const config = {
+                apiKey: '', // Will be set when user configures API key
+                model,
+                maxTokens: this.maxTokens,
+                temperature,
+                frequencyPenalty,
+                presencePenalty
+            };
+            
+            localStorage.setItem('pollyglot_config', JSON.stringify(config));
+            this.showSaveIndicator();
+        }
+    }
+
+    showSaveIndicator() {
+        const saveIndicator = document.getElementById('save-indicator');
+        if (saveIndicator) {
+            saveIndicator.style.display = 'block';
+            
+            // Hide indicator after 3 seconds
+            setTimeout(() => {
+                saveIndicator.style.display = 'none';
+            }, 3000);
         }
     }
 
@@ -53,6 +215,12 @@ class Translator {
         });
 
         // Language selection is now handled globally in the navbar
+        this.populateNavbarLanguage();
+        
+        // Reset chat when navigating to chat section
+        if (sectionName === 'chat') {
+            this.resetChat();
+        }
     }
 
     populateLanguages(sectionName = 'translate') {
@@ -96,15 +264,11 @@ class Translator {
     }
 
     bindEvents() {
-        // Setup screen events
-        const setupCompleteBtn = document.getElementById('setup-complete-btn');
-        const tempSlider = document.getElementById('temperature');
-        const tempValue = document.getElementById('temp-value');
-
-        setupCompleteBtn.addEventListener('click', () => this.completeSetup());
-        tempSlider.addEventListener('input', (e) => {
-            tempValue.textContent = e.target.value;
-        });
+        // Settings page events
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        }
 
         // Navigation events
         const navBtns = document.querySelectorAll('.nav-btn');
@@ -127,32 +291,204 @@ class Translator {
         const translateBtn = document.getElementById('translate-btn');
         const inputText = document.getElementById('input-text');
 
-        translateBtn.addEventListener('click', () => this.handleTranslate());
-        inputText.addEventListener('input', () => this.handleInputChange());
+        if (translateBtn) {
+            translateBtn.addEventListener('click', () => this.handleTranslate());
+        }
+        if (inputText) {
+            inputText.addEventListener('input', () => this.handleInputChange());
+        }
 
         // Chat events
         const chatSendBtn = document.getElementById('chat-send-btn');
         const chatInput = document.getElementById('chat-input');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
 
-        chatSendBtn.addEventListener('click', () => this.handleChatSend());
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.handleChatSend();
-            }
+        if (chatSendBtn) {
+            chatSendBtn.addEventListener('click', () => this.handleChatSend());
+        }
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.handleChatSend();
+                }
+            });
+        }
+        
+        if (clearChatBtn) {
+            clearChatBtn.addEventListener('click', () => this.clearChatHistory());
+        }
+
+        // Conversation starter events
+        const starterBtns = document.querySelectorAll('.starter-btn');
+        starterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const starterText = btn.getAttribute('data-starter');
+                this.startConversationWithStarter(starterText);
+            });
         });
 
         // Enter key support for translate
-        inputText.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                this.handleTranslate();
-            }
-        });
+        if (inputText) {
+            inputText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    this.handleTranslate();
+                }
+            });
+        }
     }
 
     // Configuration is now handled in the setup screen
 
     // Mode switching is now handled by the navbar navigation
+
+    async startConversationWithStarter(topic) {
+        const targetLanguage = document.getElementById('navbar-language').value;
+        
+        // Generate appropriate starter message in the target language
+        let starterMessage = '';
+        switch(topic) {
+            case 'work':
+                starterMessage = this.getStarterMessage('work', targetLanguage);
+                break;
+            case 'hobbies':
+                starterMessage = this.getStarterMessage('hobbies', targetLanguage);
+                break;
+            case 'food':
+                starterMessage = this.getStarterMessage('food', targetLanguage);
+                break;
+        }
+        
+        // Add user message in target language
+        this.addChatMessage('user', starterMessage);
+        
+        // Hide the conversation starters after use
+        const conversationStarters = document.querySelector('.conversation-starters');
+        if (conversationStarters) {
+            conversationStarters.style.display = 'none';
+        }
+        
+        // Show loading state
+        this.setChatLoading(true);
+        
+        // Disable starter buttons during loading
+        const starterBtns = document.querySelectorAll('.starter-btn');
+        starterBtns.forEach(btn => btn.disabled = true);
+        
+        // Get AI response via API
+        try {
+            const response = await this.getChatResponse(starterMessage, targetLanguage);
+            this.addChatMessage('assistant', response);
+        } catch (error) {
+            this.addChatMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+        } finally {
+            this.setChatLoading(false);
+            // Re-enable starter buttons
+            starterBtns.forEach(btn => btn.disabled = false);
+        }
+    }
+
+    getStarterMessage(topic, language) {
+        const messages = {
+            'work': {
+                'Spanish': 'Me gustaría hablar sobre trabajo y carreras profesionales.',
+                'French': 'J\'aimerais parler du travail et des carrières.',
+                'German': 'Ich würde gerne über Arbeit und Karriere sprechen.',
+                'Italian': 'Vorrei parlare di lavoro e carriere professionali.',
+                'Portuguese': 'Gostaria de falar sobre trabalho e carreiras.',
+                'Japanese': '仕事とキャリアについて話したいです。',
+                'Russian': 'Я хотел бы поговорить о работе и карьере.',
+                'Chinese': '我想谈谈工作和职业。',
+                'Korean': '일과 직업에 대해 이야기하고 싶습니다.',
+                'Arabic': 'أود التحدث عن العمل والمهن.'
+            },
+            'hobbies': {
+                'Spanish': 'Me interesan los pasatiempos y actividades de tiempo libre.',
+                'French': 'Je m\'intéresse aux passe-temps et aux activités de loisirs.',
+                'German': 'Ich interessiere mich für Hobbys und Freizeitaktivitäten.',
+                'Italian': 'Mi interessano gli hobby e le attività del tempo libero.',
+                'Portuguese': 'Tenho interesse em passatempos e atividades de lazer.',
+                'Japanese': '趣味や余暇活動に興味があります。',
+                'Russian': 'Меня интересуют хобби и занятия в свободное время.',
+                'Chinese': '我对爱好和休闲活动很感兴趣。',
+                'Korean': '취미와 여가 활동에 관심이 있습니다.',
+                'Arabic': 'أنا مهتم بالهوايات والأنشطة الترفيهية.'
+            },
+            'food': {
+                'Spanish': 'Hablemos de comida y cocina.',
+                'French': 'Parlons de nourriture et de cuisine.',
+                'German': 'Lass uns über Essen und Kochen sprechen.',
+                'Italian': 'Parliamo di cibo e cucina.',
+                'Portuguese': 'Vamos falar sobre comida e culinária.',
+                'Japanese': '食べ物と料理について話しましょう。',
+                'Russian': 'Давайте поговорим о еде и кулинарии.',
+                'Chinese': '让我们谈谈食物和烹饪。',
+                'Korean': '음식과 요리에 대해 이야기해 봅시다.',
+                'Arabic': 'دعنا نتحدث عن الطعام والطبخ.'
+            }
+        };
+        
+        return messages[topic][language] || messages[topic]['Spanish']; // Fallback to Spanish
+    }
+
+    resetChat() {
+        const chatMessages = document.getElementById('chat-messages');
+        
+        // Only show welcome if no messages exist
+        if (!this.chatHistory || this.chatHistory.length === 0) {
+            chatMessages.innerHTML = `
+                <div class="chat-welcome">
+                    <p>💬 Start a conversation! Type your message below and I'll respond in the selected language.</p>
+                    
+                    <div class="conversation-starters">
+                        <div class="starter-buttons">
+                            <button class="starter-btn" data-starter="work">
+                                💼 Work & Careers
+                            </button>
+                            <button class="starter-btn" data-starter="hobbies">
+                                🎨 Hobbies & Interests
+                            </button>
+                            <button class="starter-btn" data-starter="food">
+                                🍕 Food & Cooking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Re-bind event listeners for the new starter buttons
+            const starterBtns = chatMessages.querySelectorAll('.starter-btn');
+            starterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const starterText = btn.getAttribute('data-starter');
+                    this.startConversationWithStarter(starterText);
+                });
+            });
+        } else {
+            // Restore chat history
+            this.restoreChatHistory();
+        }
+    }
+
+    restoreChatHistory() {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        
+        // Restore all messages
+        this.chatHistory.forEach(msg => {
+            this.addChatMessage(msg.role, msg.content, false); // false = don't add to history
+        });
+        
+        // Show conversation starters if no messages exist
+        if (this.chatHistory.length === 0) {
+            this.resetChat();
+        }
+    }
+
+    clearChatHistory() {
+        this.chatHistory = [];
+        this.resetChat();
+    }
 
     async handleChatSend() {
         const chatInput = document.getElementById('chat-input');
@@ -182,6 +518,7 @@ class Translator {
     }
 
     async getChatResponse(message, targetLanguage) {
+        console.log(this.temperature)
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -193,9 +530,17 @@ class Translator {
                 messages: [
                     {
                         role: 'system',
-                        content: `You are a helpful AI assistant. Respond to the user's message in ${targetLanguage}. 
-                        Keep your responses conversational and natural. If the user asks a question, answer it helpfully.
-                        If they just want to chat, engage with them naturally. Always respond in ${targetLanguage}.`
+                        content: `You are a friendly, conversational AI assistant. Always respond in ${targetLanguage}.
+
+                        Your role is to:
+                        1. Take the lead in conversations and get momentum going
+                        2. When a user selects a topic (work, hobbies, food), immediately start asking engaging questions about that topic
+                        3. Ask 1 specific, open-ended question to get the user talking
+                        4. Show genuine curiosity and interest in their responses
+                        5. Keep responses concise but engaging (2-3 sentences max)
+                        6. Use the conversation starter as a signal to dive deep into that topic
+
+                        Be proactive and engaging - get the conversation flowing! Always respond in ${targetLanguage}.`
                     },
                     {
                         role: 'user',
@@ -203,7 +548,9 @@ class Translator {
                     }
                 ],
                 max_tokens: this.maxTokens,
-                temperature: this.temperature
+                temperature: this.temperature,
+                frequency_penalty: this.frequencyPenalty,
+                presence_penalty: this.presencePenalty
             })
         });
 
@@ -216,7 +563,7 @@ class Translator {
         return data.choices[0].message.content.trim();
     }
 
-    addChatMessage(role, content) {
+    addChatMessage(role, content, addToHistory = true) {
         const chatMessages = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${role}`;
@@ -230,6 +577,11 @@ class Translator {
         
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Store message in history if requested
+        if (addToHistory) {
+            this.chatHistory.push({ role, content, timestamp });
+        }
     }
 
     setChatLoading(isLoading) {
@@ -241,54 +593,43 @@ class Translator {
             chatInput.disabled = true;
             chatSendBtn.querySelector('.btn-loading').style.display = 'inline-flex';
             chatSendBtn.querySelector('span:first-child').style.display = 'none';
+            this.showChatLoading();
         } else {
             chatSendBtn.disabled = false;
             chatInput.disabled = false;
             chatSendBtn.querySelector('.btn-loading').style.display = 'none';
             chatSendBtn.querySelector('span:first-child').style.display = 'inline';
+            this.hideChatLoading();
         }
     }
 
-    completeSetup() {
-        const apiKey = document.getElementById('api-key').value.trim();
-        const model = document.getElementById('model-select').value;
-        const maxTokens = parseInt(document.getElementById('max-tokens').value);
-        const temperature = parseFloat(document.getElementById('temperature').value);
-
-        if (!apiKey) {
-            alert('Please enter your OpenAI API key.');
-            return;
-        }
-
-        // Save configuration
-        this.apiKey = apiKey;
-        this.model = model;
-        this.maxTokens = maxTokens;
-        this.temperature = temperature;
-
-        const config = {
-            apiKey,
-            model,
-            maxTokens,
-            temperature
-        };
-
-        localStorage.setItem('pollyglot_config', JSON.stringify(config));
+    showChatLoading() {
+        const chatMessages = document.getElementById('chat-messages');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-message assistant chat-loading-bubble';
+        loadingDiv.id = 'chat-loading-bubble';
         
-        // Transition to translate section
-        this.navigateToSection('translate');
-        this.showSuccess('✅ Configuration saved! You can now start translating.');
+        loadingDiv.innerHTML = `
+            <div class="chat-bubble assistant">
+                <div class="loading-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-timestamp">${new Date().toLocaleTimeString()}</div>
+        `;
+        
+        chatMessages.appendChild(loadingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    setTempApiKey() {
-        const tempKey = document.getElementById('temp-api-key').value.trim();
-        if (tempKey) {
-            this.apiKey = tempKey;
-            localStorage.setItem('openai_api_key', tempKey);
-            document.querySelector('.config-help').remove();
-            this.showSuccess('✅ API key set successfully! You can now translate text.');
-        } else {
-            alert('Please enter a valid API key.');
+    hideChatLoading() {
+        const loadingBubble = document.getElementById('chat-loading-bubble');
+        if (loadingBubble) {
+            loadingBubble.remove();
         }
     }
 
@@ -342,7 +683,9 @@ class Translator {
                     }
                 ],
                 max_tokens: this.maxTokens,
-                temperature: this.temperature
+                temperature: this.temperature,
+                frequency_penalty: this.frequencyPenalty,
+                presence_penalty: this.presencePenalty
             })
         });
 
