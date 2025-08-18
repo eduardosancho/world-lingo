@@ -3,28 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WorldLingo Translator</title>
+    <title>WorldLingo | Chat & Translator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌍 WorldLingo Translator</h1>
+            <h1>WorldLingo | Chat & Translator</h1>
             <p>Learn any language by chatting with an AI</p>
         </header>
         
         <!-- Navigation Bar -->
         <nav class="navbar">
             <div class="nav-container">
-                <button class="nav-btn active" data-section="setup">Settings</button>
-                <button class="nav-btn" data-section="translate">
-                    <span>Translate</span>
-                    <span class="tooltip-icon" data-tooltip="Translate text between languages with AI-powered accuracy">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-                        </svg>
-                    </span>
-                </button>
                 <button class="nav-btn" data-section="chat">
                     <span>Chat</span>
                     <span class="tooltip-icon" data-tooltip="Practice conversations in your target language with AI assistance">
@@ -33,6 +24,15 @@
                         </svg>
                     </span>
                 </button>
+                <button class="nav-btn" data-section="translate">
+                    <span>Translate</span>
+                    <span class="tooltip-icon" data-tooltip="Translate text between languages with AI-powered accuracy">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                        </svg>
+                    </span>
+                </button>
+                <button class="nav-btn" data-section="setup">Settings</button>
                 
                 <div class="language-selector">
                     <label for="navbar-language" title="Select the language for translation and chat">Language:</label>
@@ -47,16 +47,13 @@
         <main class="section-content" id="setup-section">
             <div class="setup-content">
                 <h2>Settings</h2>
-                <p>Adjust your AI model parameters</p>
+                <p>Adjust your chatting partner's personality</p>
                 
                 <div class="settings-form">
                     <div class="setting-group">
-                        <label for="model-select">Model</label>
-                        <select id="model-select" class="setting-input">
-                            <option value="gpt-4">GPT-4 (Most capable)</option>
-                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
-                            <option value="gpt-4-turbo">GPT-4 Turbo (Latest)</option>
-                        </select>
+                        <label>Model</label>
+                        <div class="readonly-value" id="model-readonly"></div>
+                        <small>Model is fixed by the application.</small>
                     </div>
                     
                     <div class="setting-group">

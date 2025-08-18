@@ -37,7 +37,7 @@ const CONFIG = {
     PRESENCE_PENALTY: 0,
     
     // 🎨 UI settings
-    APP_NAME: 'WorldLingo Translator',
+    APP_NAME: 'WorldLingo Chat & Translator',
     APP_VERSION: '1.0.0'
 };
 
