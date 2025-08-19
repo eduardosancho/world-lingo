@@ -552,7 +552,16 @@ class Translator {
         
         // Restore all messages
         this.chatHistory.forEach(msg => {
-            this.addChatMessage(msg.role, msg.content, false); // false = don't add to history
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${msg.role}`;
+            messageDiv.innerHTML = this.createMessageHTML(msg.role, msg.content, msg.timestamp);
+            
+            // Bind actions for assistant messages
+            if (msg.role === 'assistant') {
+                this.bindMessageActions(messageDiv, msg.content);
+            }
+            
+            chatMessages.appendChild(messageDiv);
         });
         
         // Show conversation starters if no messages exist
@@ -704,17 +713,45 @@ class Translator {
         }
     }
 
+    createMessageHTML(role, content, timestamp) {
+        if (role === 'assistant') {
+            return `
+                <div class="chat-bubble ${role}">
+                    ${content}
+                    <div class="message-actions">
+                        <button class="action-btn copy-btn" title="Copy message">Copy</button>
+                        <button class="action-btn to-translator-btn" title="Put into translator">Translate</button>
+                        <button class="action-btn more-btn" title="More options">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="19" cy="12" r="1"></circle>
+                                <circle cx="5" cy="12" r="1"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="chat-timestamp">${timestamp}</div>
+            `;
+        } else {
+            return `
+                <div class="chat-bubble ${role}">${content}</div>
+                <div class="chat-timestamp">${timestamp}</div>
+            `;
+        }
+    }
+
     addChatMessage(role, content, addToHistory = true) {
         const chatMessages = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${role}`;
         
         const timestamp = new Date().toLocaleTimeString();
+        messageDiv.innerHTML = this.createMessageHTML(role, content, timestamp);
         
-        messageDiv.innerHTML = `
-            <div class="chat-bubble ${role}">${content}</div>
-            <div class="chat-timestamp">${timestamp}</div>
-        `;
+        // Add event listeners for assistant message actions
+        if (role === 'assistant') {
+            this.bindMessageActions(messageDiv, content);
+        }
         
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -722,6 +759,57 @@ class Translator {
         // Store message in history if requested
         if (addToHistory) {
             this.chatHistory.push({ role, content, timestamp });
+        }
+    }
+
+    bindMessageActions(messageDiv, content) {
+        const copyBtn = messageDiv.querySelector('.copy-btn');
+        const toTranslatorBtn = messageDiv.querySelector('.to-translator-btn');
+        const moreBtn = messageDiv.querySelector('.more-btn');
+        
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(content).then(() => {
+                    // Show temporary success feedback
+                    copyBtn.textContent = 'Copied!';
+                    copyBtn.style.color = '#10b981';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy';
+                        copyBtn.style.color = '';
+                    }, 1500);
+                });
+            });
+        }
+        
+        if (toTranslatorBtn) {
+            toTranslatorBtn.addEventListener('click', () => {
+                this.navigateToSection('translate');
+
+                requestAnimationFrame(() => {
+                    const textarea = document.getElementById('input-text');
+                    if (textarea) {
+                        textarea.value = content;
+
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
+
+                        // Trigger input events so auto-resize and counters update
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+                        textarea.focus();
+                        try {
+                            textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+                        } catch (_) { /* noop for unsupported browsers */ }
+                    }
+                });
+            });
+        }
+        
+        if (moreBtn) {
+            moreBtn.addEventListener('click', () => {
+                // Placeholder for future functionality
+                console.log('More options clicked for:', content);
+            });
         }
     }
 
