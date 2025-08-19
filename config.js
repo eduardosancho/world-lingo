@@ -30,11 +30,14 @@ const CONFIG = {
     
     // ⚙️ App settings
     DEFAULT_LANGUAGE: 'Spanish',
+    MODEL: 'gpt-4',
     MAX_TOKENS: 1000,
-    TEMPERATURE: 0.3,
+    TEMPERATURE: 0.9,
+    FREQUENCY_PENALTY: 0,
+    PRESENCE_PENALTY: 0,
     
     // 🎨 UI settings
-    APP_NAME: 'WorldLingo Translator',
+    APP_NAME: 'WorldLingo Chat & Translator',
     APP_VERSION: '1.0.0'
 };
 

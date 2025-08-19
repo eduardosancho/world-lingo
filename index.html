@@ -3,84 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WorldLingo Translator</title>
+    <title>WorldLingo | Chat & Translator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌍 WorldLingo Translator</h1>
-            <p>Translate text to multiple languages using AI</p>
+            <h1>WorldLingo | Chat & Translator</h1>
+            <p>Learn any language by chatting with an AI</p>
         </header>
         
-        <!-- Setup Screen -->
-        <main class="setup-screen" id="setup-screen">
-            <div class="setup-content">
-                <h2>🔧 Developer Setup</h2>
-                <p>Configure your OpenAI API parameters to get started</p>
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <button class="nav-btn" data-section="chat">
+                    <span>Chat</span>
+                    <span class="tooltip-icon" data-tooltip="Practice conversations in your target language with AI assistance">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                        </svg>
+                    </span>
+                </button>
+                <button class="nav-btn" data-section="translate">
+                    <span>Translate</span>
+                    <span class="tooltip-icon" data-tooltip="Translate text between languages with AI-powered accuracy">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                        </svg>
+                    </span>
+                </button>
+                <button class="nav-btn" data-section="setup">Settings</button>
                 
-                <div class="setup-form">
-                    <div class="form-group">
-                        <label for="api-key">OpenAI API Key:</label>
-                        <input 
-                            type="password" 
-                            id="api-key" 
-                            placeholder="sk-..."
-                            required
-                        >
-                        <small>Get your key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                <div class="language-selector">
+                    <label for="navbar-language" title="Select the language for translation and chat">Language:</label>
+                    <select id="navbar-language" class="language-dropdown">
+                        <!-- Languages will be populated dynamically -->
+                    </select>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Setup Section -->
+        <main class="section-content" id="setup-section">
+            <div class="setup-content">
+                <h2>Settings</h2>
+                <p>Adjust your chatting partner's personality</p>
+                
+                <div class="settings-form">
+                    <div class="setting-group">
+                        <label>Model</label>
+                        <div class="readonly-value" id="model-readonly"></div>
+                        <small>Model is fixed by the application.</small>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="model-select">Model:</label>
-                        <select id="model-select">
-                            <option value="gpt-4">GPT-4 (Most capable)</option>
-                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
-                            <option value="gpt-4-turbo">GPT-4 Turbo (Latest)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="max-tokens">Max Tokens:</label>
+                    <div class="setting-group">
+                        <label for="temperature">Temperature</label>
+                        <div class="slider-container">
+                            <input 
+                                type="range" 
+                                id="temperature-slider" 
+                                min="0" 
+                                max="2" 
+                                step="0.1" 
+                                value="0.9"
+                                class="setting-slider"
+                            >
+                            <div class="slider-labels">
+                                <span>Focused</span>
+                                <span>Balanced</span>
+                                <span>Creative</span>
+                            </div>
+                        </div>
                         <input 
                             type="number" 
-                            id="max-tokens" 
-                            value="1000" 
-                            min="100" 
-                            max="4000"
-                        >
-                        <small>Maximum length of the response (100-4000)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="temperature">Temperature:</label>
-                        <input 
-                            type="range" 
                             id="temperature" 
                             min="0" 
                             max="2" 
                             step="0.1" 
-                            value="0.3"
+                            value="0.9"
+                            class="setting-number"
                         >
-                        <div class="range-labels">
-                            <span>Focused (0)</span>
-                            <span id="temp-value">0.3</span>
-                            <span>Creative (2)</span>
-                        </div>
-                        <br>
                         <small>Lower = more focused, Higher = more creative</small>
-                        <small>Going too high or too low will result in gibberish.</small>
                     </div>
                     
-                    <button id="setup-complete-btn" class="setup-button">
-                        🚀 Start Translating
+                    <div class="setting-group">
+                        <label for="frequency-penalty">Frequency Penalty</label>
+                        <div class="slider-container">
+                            <input 
+                                type="range" 
+                                id="frequency-penalty-slider" 
+                                min="-2" 
+                                max="2" 
+                                step="0.1" 
+                                value="0"
+                                class="setting-slider"
+                            >
+                            <div class="slider-labels">
+                                <span>Less Repetitive</span>
+                                <span>Neutral</span>
+                                <span>More Repetitive</span>
+                            </div>
+                        </div>
+                        <input 
+                            type="number" 
+                            id="frequency-penalty" 
+                            min="-2" 
+                            max="2" 
+                            step="0.1" 
+                            value="0"
+                            class="setting-number"
+                        >
+                        <small>Controls how much to penalize repetitive text</small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="presence-penalty">Presence Penalty</label>
+                        <div class="slider-container">
+                            <input 
+                                type="range" 
+                                id="presence-penalty-slider" 
+                                min="-2" 
+                                max="2" 
+                                step="0.1" 
+                                value="0"
+                                class="setting-slider"
+                            >
+                            <div class="slider-labels">
+                                <span>Less Novel</span>
+                                <span>Neutral</span>
+                                <span>More Novel</span>
+                            </div>
+                        </div>
+                        <input 
+                            type="number" 
+                            id="presence-penalty" 
+                            min="-2" 
+                            max="2" 
+                                step="0.1" 
+                                value="0"
+                                class="setting-number"
+                        >
+                        <small>Controls how much to penalize new topics</small>
+                    </div>
+                
+                    
+                    <button id="save-settings-btn" class="save-button">
+                        Save Changes
                     </button>
+                    
+                    <div id="save-indicator" class="save-indicator" style="display: none;">
+                        Settings saved successfully!
+                    </div>
                 </div>
             </div>
         </main>
         
-        <!-- Translator Interface (Hidden initially) -->
-        <main class="translator" id="translator" style="display: none;">
+        <!-- Translate Section -->
+        <main class="section-content" id="translate-section" style="display: none;">
             <div class="input-section">
                 <label for="input-text">Enter text to translate:</label>
                 <textarea 
@@ -90,12 +169,7 @@
                 ></textarea>
             </div>
             
-            <div class="language-selection">
-                <label>Select target language:</label>
-                <div class="radio-group" id="language-options">
-                    <!-- Languages will be populated dynamically from config.js -->
-                </div>
-            </div>
+
             
             <button id="translate-btn" class="translate-button">
                 <span class="btn-text">Translate</span>
@@ -110,7 +184,36 @@
                 <div class="translation-result" id="translation-result"></div>
                 <div class="translation-meta">
                     <span class="source-language">Source: <span id="source-lang">Auto-detected</span></span>
-                    <span class="target-language">Target: <span id="target-lang">Spanish</span></span>
+                    <span class="target-language">Target: <span id="target-lang">Auto-detected</span></span>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Chat Section -->
+        <main class="section-content" id="chat-section" style="display: none;">
+            
+            <div class="chat-controls">
+                <button id="clear-chat-btn" class="clear-chat-btn" title="Clear chat history">
+                    Clear Chat
+                </button>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        placeholder="Type your message here..."
+                        rows="2"
+                    ></textarea>
+                    <button id="chat-send-btn" class="chat-send-button">
+                        <span>Send</span>
+                        <span class="btn-loading" style="display: none;">
+                            <div class="spinner"></div>
+                        </span>
+                    </button>
                 </div>
             </div>
         </main>
@@ -124,3 +227,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+

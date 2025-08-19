@@ -121,3 +121,5 @@ This project is open source and available under the [MIT License](LICENSE).
 ---
 
 **Happy Translating! 🌍✨**
+
+Wow this has been an incredible trip through learning about interacting with the openai api and building my own app. I've been following a free course on scrimba and it's amazing how well they mix an interactive coding environment with video lessons. Their platform is a whole new format that is revolutionizing hands-on learning. At the end of the lessons they challenge the students to put to practice the concepts that they just learned in the past 10 lessons and build their own translator app. So I obviously gave it a try and with the help of Cursor this is the result of just 15 minutes of coding. Aren't you amazed?
