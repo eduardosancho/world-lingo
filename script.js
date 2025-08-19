@@ -7,7 +7,9 @@ class Translator {
         this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
         this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
         this.chatHistory = [];
+        this.translatorState = { inputText: '', outputText: '', targetLanguage: '' };
         this.loadChatHistory();
+        this.loadTranslatorState();
         this.init();
     }
 
@@ -28,6 +30,44 @@ class Translator {
         } catch (e) {
             console.warn('Could not load chat history from localStorage:', e);
             this.chatHistory = [];
+        }
+    }
+
+    saveTranslatorState() {
+        try {
+            localStorage.setItem('pollyglot_translator_state', JSON.stringify(this.translatorState));
+        } catch (e) {
+            console.warn('Could not save translator state to localStorage:', e);
+        }
+    }
+
+    loadTranslatorState() {
+        try {
+            const stored = localStorage.getItem('pollyglot_translator_state');
+            if (stored) {
+                this.translatorState = JSON.parse(stored);
+                // Restore input text and output text if they exist
+                const inputTextElement = document.getElementById('input-text');
+                const outputSection = document.getElementById('output-section');
+                const outputTextElement = document.getElementById('translation-result');
+
+                if (inputTextElement) {
+                    inputTextElement.value = this.translatorState.inputText;
+                    // Trigger input event to update textarea height and character count
+                    inputTextElement.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (outputSection && outputTextElement && this.translatorState.outputText) {
+                    outputTextElement.textContent = this.translatorState.outputText;
+                    outputSection.style.display = 'block';
+                    // Update target language span
+                    const targetLangSpan = document.getElementById('target-lang');
+                    if (targetLangSpan) {
+                        targetLangSpan.textContent = this.translatorState.targetLanguage;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not load translator state from localStorage:', e);
         }
     }
 
@@ -410,12 +450,21 @@ class Translator {
         // Translator events
         const translateBtn = document.getElementById('translate-btn');
         const inputText = document.getElementById('input-text');
+        const copyToChatBtn = document.getElementById('copy-to-chat-btn');
 
         if (translateBtn) {
-        translateBtn.addEventListener('click', () => this.handleTranslate());
+            translateBtn.addEventListener('click', () => this.handleTranslate());
         }
         if (inputText) {
-        inputText.addEventListener('input', () => this.handleInputChange());
+            inputText.addEventListener('input', () => this.handleInputChange());
+            // Save input text as user types for persistence
+            inputText.addEventListener('input', () => {
+                this.translatorState.inputText = inputText.value;
+                this.saveTranslatorState();
+            });
+        }
+        if (copyToChatBtn) {
+            copyToChatBtn.addEventListener('click', () => this.copyTranslationToChat());
         }
 
         // Chat events
@@ -653,7 +702,10 @@ class Translator {
         const messages = [
             {
                 role: 'system',
-                content: `You are a professional translator. Translate the given text to ${targetLanguage}. 
+                content: `You are a professional translator.
+                Follow this rule:
+                - If the input looks like English, translate it into ${targetLanguage}.
+                - Otherwise, assume the input is written in ${targetLanguage} and translate it into English.
                 Only return the translated text, nothing else. Maintain the original formatting and tone.`
             },
             {
@@ -696,7 +748,7 @@ class Translator {
         const targetLangSpan = document.getElementById('target-lang');
 
         translationResult.textContent = translation;
-        targetLangSpan.textContent = targetLanguage;
+        targetLangSpan.textContent = 'English';
         
         outputSection.style.display = 'block';
         
@@ -912,6 +964,38 @@ class Translator {
         }
     }
 
+    copyTranslationToChat() {
+        const translationResult = document.getElementById('translation-result');
+        const chatInput = document.getElementById('chat-input');
+        
+        if (translationResult && chatInput) {
+            const translationText = translationResult.textContent;
+            if (translationText.trim()) {
+                chatInput.value = translationText;
+                chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                setTimeout(() => {
+                    this.navigateToSection('chat');
+                    
+                    requestAnimationFrame(() => {
+                        const chatInputEl = document.getElementById('chat-input');
+                        if (chatInputEl) {
+                            chatInputEl.focus();
+                            try {
+                                chatInputEl.selectionStart = chatInputEl.selectionEnd = chatInputEl.value.length;
+                            } catch (_) { /* noop */ }
+                            // Apply a brief background highlight animation
+                            chatInputEl.classList.remove('chat-paste-animate');
+                            void chatInputEl.offsetWidth; // reflow to restart animation
+                            chatInputEl.classList.add('chat-paste-animate');
+                            setTimeout(() => chatInputEl.classList.remove('chat-paste-animate'), 1200);
+                        }
+                    });
+                }, 200);
+            }
+        }
+    }
+
     async handleTranslate() {
         const inputText = document.getElementById('input-text').value.trim();
         const targetLanguage = document.getElementById('navbar-language').value;
@@ -928,6 +1012,12 @@ class Translator {
         try {
             const translation = await this.translateText(inputText, targetLanguage);
             this.displayTranslation(translation, targetLanguage);
+            
+            // Save translator state after successful translation
+            this.translatorState.inputText = inputText;
+            this.translatorState.outputText = translation;
+            this.translatorState.targetLanguage = targetLanguage;
+            this.saveTranslatorState();
         } catch (error) {
             this.showError('Whoops! Something went wrong. Please try again later.');
         } finally {

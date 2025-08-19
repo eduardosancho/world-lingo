@@ -187,11 +187,48 @@ header p {
     min-height: 60px;
 }
 
+.translation-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .translation-meta {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
+    gap: 20px;
     font-size: 14px;
     color: #666;
+}
+
+.translation-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.copy-to-chat-button {
+    padding: 10px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.copy-to-chat-button:hover {
+    background: #5a6fd8;
+    transform: translateY(-1px);
+}
+
+.copy-to-chat-button:active {
+    transform: translateY(0);
 }
 
 .translation-meta span {
@@ -423,7 +460,7 @@ footer {
 .section-content {
     background: white;
     border-radius: 20px;
-    padding: 40px;
+    padding: 20px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
     margin-bottom: 30px;
@@ -727,7 +764,7 @@ footer {
 }
 
 .chat-messages {
-    height: 400px;
+    height: 350px;
     overflow-y: auto;
     padding: 20px;
     background: #f8f9ff;
@@ -1047,4 +1084,16 @@ footer {
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
+}
+
+.chat-paste-animate {
+    animation: textBlink 1.2s ease-in-out;
+}
+
+@keyframes textBlink {
+    0% { background-color: #ffffff; }
+    25% { background-color: #eeeeee; }
+    50% { background-color: #ffffff; }
+    75% { background-color: #eeeeee; }
+    100% { background-color: #ffffff; }
 }
