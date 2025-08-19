@@ -910,6 +910,38 @@ footer {
     transform: none;
 }
 
+/* Assistant typing dots in chat loading bubble */
+.loading-content {
+    min-height: 20px;
+}
+
+.typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: #667eea;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.6;
+    animation: typingBlink 1.4s infinite both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBlink {
+    0% { opacity: 0.3; transform: translateY(0); }
+    20% { opacity: 1; transform: translateY(-3px); }
+    40% { opacity: 0.3; transform: translateY(0); }
+    100% { opacity: 0.3; transform: translateY(0); }
+}
+
 /* Configuration help */
 .config-help {
     background: #f8f9ff;
