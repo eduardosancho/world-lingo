@@ -7,7 +7,28 @@ class Translator {
         this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
         this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
         this.chatHistory = [];
+        this.loadChatHistory();
         this.init();
+    }
+
+    saveChatHistory() {
+        try {
+            localStorage.setItem('pollyglot_chat_history', JSON.stringify(this.chatHistory));
+        } catch (e) {
+            console.warn('Could not save chat history to localStorage:', e);
+        }
+    }
+
+    loadChatHistory() {
+        try {
+            const stored = localStorage.getItem('pollyglot_chat_history');
+            if (stored) {
+                this.chatHistory = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.warn('Could not load chat history from localStorage:', e);
+            this.chatHistory = [];
+        }
     }
 
     init() {
@@ -572,6 +593,7 @@ class Translator {
 
     clearChatHistory() {
         this.chatHistory = [];
+        this.saveChatHistory();
         this.resetChat();
     }
 
@@ -759,6 +781,7 @@ class Translator {
         // Store message in history if requested
         if (addToHistory) {
             this.chatHistory.push({ role, content, timestamp });
+            this.saveChatHistory();
         }
     }
 
