@@ -571,13 +571,43 @@ class Translator {
         const chatMessages = document.getElementById('chat-messages');
         chatMessages.innerHTML = '';
         
-        // Restore all messages
+        const baseWelcome = `
+            <div class="chat-welcome">
+                <p>💬 Start a conversation! Type your message below and I'll respond in the selected language.</p>
+            </div>
+        `;
+        
+        // If there are no messages, include conversation starters as well
+        if (!this.chatHistory || this.chatHistory.length === 0) {
+            chatMessages.innerHTML = `
+                ${baseWelcome}
+                <div class="conversation-starters">
+                    <div class="starter-buttons">
+                        <button class="starter-btn" data-starter="work">💼 Work & Careers</button>
+                        <button class="starter-btn" data-starter="hobbies">🎨 Hobbies & Interests</button>
+                        <button class="starter-btn" data-starter="food">🍕 Food & Cooking</button>
+                    </div>
+                </div>
+            `;
+            
+            // Re-bind event listeners for the new starter buttons
+            const starterBtns = chatMessages.querySelectorAll('.starter-btn');
+            starterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const starterText = btn.getAttribute('data-starter');
+                    this.startConversationWithStarter(starterText);
+                });
+            });
+            return;
+        }
+        
+        chatMessages.innerHTML = baseWelcome;
+        
         this.chatHistory.forEach(msg => {
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${msg.role}`;
             messageDiv.innerHTML = this.createMessageHTML(msg.role, msg.content, msg.timestamp);
             
-            // Bind actions for assistant messages
             if (msg.role === 'assistant') {
                 this.bindMessageActions(messageDiv, msg.content);
             }
@@ -585,10 +615,7 @@ class Translator {
             chatMessages.appendChild(messageDiv);
         });
         
-        // Show conversation starters if no messages exist
-        if (this.chatHistory.length === 0) {
-            this.resetChat();
-        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     clearChatHistory() {
