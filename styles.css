@@ -846,6 +846,7 @@ footer {
     padding: 20px;
     background: white;
     border-top: 1px solid #e1e5e9;
+    position: relative;
 }
 
 .chat-loading {
@@ -876,9 +877,15 @@ footer {
     border: 2px solid #e1e5e9;
     border-radius: 8px;
     padding: 12px;
+    padding-right: 50px;
+    padding-bottom: 40px;
     font-size: 16px;
-    resize: none;
+    resize: vertical;
     font-family: inherit;
+    min-height: 48px;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.4;
 }
 
 #chat-input:focus {
@@ -888,15 +895,20 @@ footer {
 }
 
 .chat-send-button {
-    padding: 12px 24px;
+    position: absolute;
+    bottom: 28px;
+    right: 28px;
+    padding: 8px 12px;
     background: #667eea;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    transition: all 0.3s ease;
+    font-size: 14px;
+    transition: all 0.2s ease;
     white-space: nowrap;
+    z-index: 10;
 }
 
 .chat-send-button:hover {
@@ -908,6 +920,7 @@ footer {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: #9ca3af;
 }
 
 /* Assistant typing dots in chat loading bubble */
