@@ -8,8 +8,10 @@ class Translator {
         this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
         this.chatHistory = [];
         this.chatInputState = { text: '' };
+        this.selectedLanguage = 'Portuguese'; // Default language
         this.loadChatHistory();
         this.loadChatInputState();
+        this.loadSelectedLanguage();
         this.init();
     }
 
@@ -57,15 +59,42 @@ class Translator {
         }
     }
 
+    loadSelectedLanguage() {
+        const storedLanguage = localStorage.getItem('pollyglot_selected_language');
+        const languageDropdown = document.getElementById('navbar-language');
+        
+        if (storedLanguage) {
+            this.selectedLanguage = storedLanguage;
+            if (languageDropdown) {
+                languageDropdown.value = this.selectedLanguage;
+            }
+        } else {
+            // If no stored language, default to first option
+            if (languageDropdown && CONFIG.LANGUAGES.length > 0) {
+                this.selectedLanguage = CONFIG.LANGUAGES[0].value;
+                languageDropdown.value = this.selectedLanguage;
+            }
+        }
+        
+        this.updateTargetLanguage();
+    }
+
+    saveSelectedLanguage() {
+        try {
+            localStorage.setItem('pollyglot_selected_language', this.selectedLanguage);
+        } catch (e) {
+            console.warn('Could not save selected language to localStorage:', e);
+        }
+    }
+
     init() {
-        this.checkSetupStatus();
         this.populateNavbarLanguage();
         this.bindEvents();
-        this.restoreNavigationState();
+        this.loadSelectedLanguage();
+        this.checkSetupStatus();
     }
 
     restoreNavigationState() {
-        // Check if there's a stored active section and restore it
         const activeSection = localStorage.getItem('pollyglot_active_section');
         if (activeSection) {
             // Update the navigation button states
@@ -77,27 +106,23 @@ class Translator {
                 }
             });
             
-            // Show the correct section content
             this.showSectionContent(activeSection);
         } else {
-            // Default to chat section
             this.navigateToSection('chat');
         }
     }
 
     showSectionContent(sectionName) {
-        // Hide all sections
         const sections = ['setup-section', 'translate-section', 'chat-section'];
         sections.forEach(section => {
             document.getElementById(section).style.display = 'none';
         });
 
-        // Show selected section
         document.getElementById(`${sectionName}-section`).style.display = 'block';
         
-        // Handle special cases for each section
         if (sectionName === 'setup') {
-            this.showSettingsPage();
+            this.populateSettingsForm();
+            this.bindSettingsSync();
         } else if (sectionName === 'chat') {
             this.resetChat();
         }
@@ -106,7 +131,6 @@ class Translator {
     checkSetupStatus() {
         this.apiKey = CONFIG.OPENAI_API_KEY;
         
-        // Check if we have stored configuration
         const storedConfig = localStorage.getItem('pollyglot_config');
         if (storedConfig) {
             try {
@@ -117,7 +141,6 @@ class Translator {
                 this.frequencyPenalty = config.frequencyPenalty || 0;
                 this.presencePenalty = config.presencePenalty || 0;
                 
-                // Restore last active section if present; otherwise default to chat
                 const activeSection = localStorage.getItem('pollyglot_active_section');
                 if (activeSection) {
                     this.navigateToSection(activeSection);
@@ -136,7 +159,6 @@ class Translator {
             this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
             this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
             
-            // Restore last active section if present; otherwise default to chat
             const activeSection = localStorage.getItem('pollyglot_active_section');
             if (activeSection) {
                 this.navigateToSection(activeSection);
@@ -194,24 +216,12 @@ class Translator {
         }
     }
 
-    showSettingsPage() {
-        // Populate settings form with current values
-        this.populateSettingsForm();
-        
-        // Bind slider and number input synchronization
-        this.bindSettingsSync();
-        
-        // Do not navigate here to avoid recursion; navigation is handled by caller
-    }
-
     populateSettingsForm() {
-        // Set model (read-only display)
         const modelReadonly = document.getElementById('model-readonly');
         if (modelReadonly) {
             modelReadonly.textContent = this.model;
         }
         
-        // Set temperature values
         const tempSlider = document.getElementById('temperature-slider');
         const tempInput = document.getElementById('temperature');
         if (tempSlider && tempInput) {
@@ -219,7 +229,6 @@ class Translator {
             tempInput.value = this.temperature;
         }
         
-        // Set frequency penalty values
         const freqSlider = document.getElementById('frequency-penalty-slider');
         const freqInput = document.getElementById('frequency-penalty');
         if (freqSlider && freqInput) {
@@ -227,7 +236,6 @@ class Translator {
             freqInput.value = this.frequencyPenalty;
         }
         
-        // Set presence penalty values
         const presenceSlider = document.getElementById('presence-penalty-slider');
         const presenceInput = document.getElementById('presence-penalty');
         if (presenceSlider && presenceInput) {
@@ -237,7 +245,6 @@ class Translator {
     }
 
     bindSettingsSync() {
-        // Temperature synchronization
         const tempSlider = document.getElementById('temperature-slider');
         const tempInput = document.getElementById('temperature');
         if (tempSlider && tempInput) {
@@ -253,7 +260,6 @@ class Translator {
             });
         }
         
-        // Frequency penalty synchronization
         const freqSlider = document.getElementById('frequency-penalty-slider');
         const freqInput = document.getElementById('frequency-penalty');
         if (freqSlider && freqInput) {
@@ -269,7 +275,6 @@ class Translator {
             });
         }
         
-        // Presence penalty synchronization
         const presenceSlider = document.getElementById('presence-penalty-slider');
         const presenceInput = document.getElementById('presence-penalty');
         if (presenceSlider && presenceInput) {
@@ -287,17 +292,14 @@ class Translator {
     }
 
     saveSettings() {
-        // Get current values from form
         const temperature = parseFloat(document.getElementById('temperature').value);
         const frequencyPenalty = parseFloat(document.getElementById('frequency-penalty').value);
         const presencePenalty = parseFloat(document.getElementById('presence-penalty').value);
 
-        // Update instance variables
         this.temperature = temperature;
         this.frequencyPenalty = frequencyPenalty;
         this.presencePenalty = presencePenalty;
 
-        // Update stored configuration
         const storedConfig = localStorage.getItem('pollyglot_config');
         if (storedConfig) {
             try {
@@ -330,7 +332,6 @@ class Translator {
             localStorage.setItem('pollyglot_config', JSON.stringify(config));
             this.showSaveIndicator();
             
-            // Navigate to chat section after successful save
             setTimeout(() => {
                 this.navigateToSection('chat');
             }, 1500);
@@ -342,7 +343,6 @@ class Translator {
         if (saveIndicator) {
             saveIndicator.style.display = 'block';
             
-            // Hide indicator after 3 seconds
             setTimeout(() => {
                 saveIndicator.style.display = 'none';
             }, 3000);
@@ -350,10 +350,8 @@ class Translator {
     }
 
     navigateToSection(sectionName) {
-        // Show the selected section content
         this.showSectionContent(sectionName);
 
-        // Update navigation buttons
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.classList.remove('active');
@@ -362,10 +360,6 @@ class Translator {
             }
         });
 
-        // Language selection is now handled globally in the navbar
-        this.populateNavbarLanguage();
-        
-        // Save the current active section
         localStorage.setItem('pollyglot_active_section', sectionName);
     }
 
@@ -404,7 +398,6 @@ class Translator {
             const option = document.createElement('option');
             option.value = lang.value;
             option.textContent = `${lang.flag} ${lang.label}`;
-            if (index === 0) option.selected = true;
             languageDropdown.appendChild(option);
         });
     }
@@ -430,6 +423,7 @@ class Translator {
         if (languageDropdown) {
             languageDropdown.addEventListener('change', () => {
                 this.updateTargetLanguage();
+                this.saveSelectedLanguage();
             });
         }
 
@@ -440,12 +434,6 @@ class Translator {
 
         if (translateBtn) {
             translateBtn.addEventListener('click', () => this.handleTranslate());
-        }
-        if (inputText) {
-            inputText.addEventListener('input', () => {
-                this.adjustTextareaHeight(inputText);
-                this.updateCharacterCount(inputText);
-            });
         }
         if (copyToChatBtn) {
             copyToChatBtn.addEventListener('click', () => this.copyTranslationToChat());
@@ -490,7 +478,7 @@ class Translator {
     async startConversationWithStarter(topic) {
         const targetLanguage = document.getElementById('navbar-language').value;
         
-        // Generate appropriate starter message in the target language
+        // Generate starter message in the target language
         let starterMessage = '';
         switch(topic) {
             case 'work':
@@ -692,11 +680,19 @@ class Translator {
         const messages = [
             {
                 role: 'system',
-                content: `You are a professional translator.
-                Follow this rule:
-                - If the input looks like English, translate it into ${targetLanguage}.
-                - Otherwise, assume the input is written in ${targetLanguage} and translate it into English.
-                Only return the translated text, nothing else. Maintain the original formatting and tone.`
+                content: `You are a professional translator with deep cultural understanding. Your task is to translate text while preserving meaning, context, and cultural nuances.
+
+                IMPORTANT TRANSLATION RULES:
+                1. PROPER NOUNS: Never translate proper nouns (names, places, brands, companies, etc.). Keep them exactly as written.
+                2. CULTURAL EXPRESSIONS: Don't translate word-for-word. Understand the cultural context and find the most appropriate equivalent in the target language.
+                3. IDIOMS & PHRASES: Translate the meaning, not the literal words. Use natural expressions that native speakers would use.
+                4. CONTEXT AWARENESS: Consider the overall context and tone of the text when choosing translations.
+                5. ACCURACY: Ensure the translation maintains the original intent and emotional tone.
+
+                If the input text is in English, translate it to ${targetLanguage}.
+                If the input text is in ${targetLanguage} (or any other language), translate it to English.
+
+                Provide only the translation, no explanations or additional text.`
             },
             {
                 role: 'user',
@@ -711,17 +707,20 @@ class Translator {
         const messages = [
             {
                 role: 'system',
-                content: `You are a friendly, conversational AI assistant. Always respond in ${targetLanguage}.
+                content: `You are a friendly, engaging conversational AI assistant. You're having a natural conversation with a user in ${targetLanguage}.
 
                 Your role is to:
-                1. Take the lead in conversations and get momentum going
-                2. When a user selects a topic (work, hobbies, food), immediately start asking engaging questions about that topic
-                3. Ask 1 specific, open-ended question to get the user talking
-                4. Show genuine curiosity and interest in their responses
+                1. Be a good listener and respond to the user's messages in a natural, conversational way
+                2. When you are starting the conversation try telling a short story or a joke to get the user talking
+                3. Ask open-ended questions that captivates the user
+                4. Show genuine curiosity and interest in their responses, without being too pushy or intrusive
                 5. Keep responses concise but engaging (2-3 sentences max)
-                6. Use the conversation starter as a signal to dive deep into that topic
+                6. Use the conversation starter as a kickoff point then try to subtly change the topic
+                7. PAY ATTENTION TO CONTEXT - Don't ask about topics the user has already mentioned or discussed. Build on what they've shared, don't repeat questions.
+                8. REMEMBER what the user has told you about their interests, experiences, and preferences. Reference these naturally in conversation.
+                9. Don't linger on the same topic too much, try to change the topic if the user's responses show lack of interest.
 
-                Be proactive and engaging - get the conversation flowing! Always respond in ${targetLanguage}.`
+                Be proactive to match the user's energy - understand them first, then get the conversation flowing! Always respond in ${targetLanguage}.`
             },
             {
                 role: 'user',
@@ -797,9 +796,12 @@ class Translator {
     }
 
     updateTargetLanguage() {
+        const languageDropdown = document.getElementById('navbar-language');
         const targetLangSpan = document.getElementById('target-lang');
-        const selectedLanguage = document.getElementById('navbar-language').value;
-        if (targetLangSpan) {
+        
+        if (languageDropdown && targetLangSpan) {
+            const selectedLanguage = languageDropdown.value;
+            this.selectedLanguage = selectedLanguage;
             targetLangSpan.textContent = selectedLanguage;
         }
     }
@@ -847,7 +849,6 @@ class Translator {
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Store message in history if requested
         if (addToHistory) {
             this.chatHistory.push({ role, content, timestamp });
             this.saveChatHistory();
@@ -1025,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
         this.style.height = this.scrollHeight + 'px';
     });
 
-    // Add character count
+    // Character count
     const charCount = document.createElement('div');
     charCount.style.cssText = 'text-align: right; font-size: 12px; color: #666; margin-top: 5px;';
     textarea.parentNode.appendChild(charCount);
