@@ -7,9 +7,9 @@ class Translator {
         this.frequencyPenalty = CONFIG.FREQUENCY_PENALTY || 0;
         this.presencePenalty = CONFIG.PRESENCE_PENALTY || 0;
         this.chatHistory = [];
-        this.translatorState = { inputText: '', outputText: '', targetLanguage: '' };
+        this.chatInputState = { text: '' };
         this.loadChatHistory();
-        this.loadTranslatorState();
+        this.loadChatInputState();
         this.init();
     }
 
@@ -33,41 +33,27 @@ class Translator {
         }
     }
 
-    saveTranslatorState() {
+    saveChatInputState() {
         try {
-            localStorage.setItem('pollyglot_translator_state', JSON.stringify(this.translatorState));
+            localStorage.setItem('pollyglot_chat_input_state', JSON.stringify(this.chatInputState));
         } catch (e) {
-            console.warn('Could not save translator state to localStorage:', e);
+            console.warn('Could not save chat input state to localStorage:', e);
         }
     }
 
-    loadTranslatorState() {
+    loadChatInputState() {
         try {
-            const stored = localStorage.getItem('pollyglot_translator_state');
+            const stored = localStorage.getItem('pollyglot_chat_input_state');
             if (stored) {
-                this.translatorState = JSON.parse(stored);
-                // Restore input text and output text if they exist
-                const inputTextElement = document.getElementById('input-text');
-                const outputSection = document.getElementById('output-section');
-                const outputTextElement = document.getElementById('translation-result');
-
-                if (inputTextElement) {
-                    inputTextElement.value = this.translatorState.inputText;
-                    // Trigger input event to update textarea height and character count
-                    inputTextElement.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                if (outputSection && outputTextElement && this.translatorState.outputText) {
-                    outputTextElement.textContent = this.translatorState.outputText;
-                    outputSection.style.display = 'block';
-                    // Update target language span
-                    const targetLangSpan = document.getElementById('target-lang');
-                    if (targetLangSpan) {
-                        targetLangSpan.textContent = this.translatorState.targetLanguage;
-                    }
+                this.chatInputState = JSON.parse(stored);
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) {
+                    chatInput.value = this.chatInputState.text;
+                    chatInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
         } catch (e) {
-            console.warn('Could not load translator state from localStorage:', e);
+            console.warn('Could not load chat input state from localStorage:', e);
         }
     }
 
@@ -456,11 +442,9 @@ class Translator {
             translateBtn.addEventListener('click', () => this.handleTranslate());
         }
         if (inputText) {
-            inputText.addEventListener('input', () => this.handleInputChange());
-            // Save input text as user types for persistence
             inputText.addEventListener('input', () => {
-                this.translatorState.inputText = inputText.value;
-                this.saveTranslatorState();
+                this.adjustTextareaHeight(inputText);
+                this.updateCharacterCount(inputText);
             });
         }
         if (copyToChatBtn) {
@@ -476,12 +460,17 @@ class Translator {
         chatSendBtn.addEventListener('click', () => this.handleChatSend());
         }
         if (chatInput) {
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.handleChatSend();
-            }
-        });
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.handleChatSend();
+                }
+            });
+            // Save chat input as user types for persistence
+            chatInput.addEventListener('input', () => {
+                this.chatInputState.text = chatInput.value;
+                this.saveChatInputState();
+            });
         }
         
         if (clearChatBtn) {
@@ -675,7 +664,6 @@ class Translator {
 
     async handleChatSend() {
         const chatInput = document.getElementById('chat-input');
-        const chatSendBtn = document.getElementById('chat-send-btn');
         const message = chatInput.value.trim();
 
         if (!message) return;
@@ -686,6 +674,8 @@ class Translator {
         
         // Clear input and disable send button
         chatInput.value = '';
+        this.chatInputState.text = '';
+        this.saveChatInputState();
         this.setChatLoading(true);
 
         try {
@@ -1014,10 +1004,6 @@ class Translator {
             this.displayTranslation(translation, targetLanguage);
             
             // Save translator state after successful translation
-            this.translatorState.inputText = inputText;
-            this.translatorState.outputText = translation;
-            this.translatorState.targetLanguage = targetLanguage;
-            this.saveTranslatorState();
         } catch (error) {
             this.showError('Whoops! Something went wrong. Please try again later.');
         } finally {

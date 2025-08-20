@@ -1092,8 +1092,8 @@ footer {
 
 @keyframes textBlink {
     0% { background-color: #ffffff; }
-    25% { background-color: #eeeeee; }
+    25% { background-color: #c9d2fc; }
     50% { background-color: #ffffff; }
-    75% { background-color: #eeeeee; }
+    75% { background-color: #c9d2fc; }
     100% { background-color: #ffffff; }
 }
